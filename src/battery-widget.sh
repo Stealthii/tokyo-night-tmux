@@ -16,28 +16,38 @@ CHARGING_ICONS=("󰢜" "󰂆" "󰂇" "󰂈" "󰢝" "󰂉" "󰢞" "󰂊" "󰂋" "
 NOT_CHARGING_ICON="󰚥"
 
 default_show_battery_percentage=1
-default_battery_name="BAT1"
 default_battery_low="21"
+if [[ "$(uname)" == "Darwin" ]]; then
+  default_battery_name="InternalBattery-0"
+else
+  default_battery_name="BAT1"
+fi
 
 BATTERY_NAME="${BATTERY_NAME:-$default_battery_name}"
 BATTERY_LOW="${BATTERY_LOW:-$default_battery_low}"
 
 # get battery stats
-BATTERY_STATUS=$(</sys/class/power_supply/${BATTERY_NAME}/status)
-BATTERY_PERCENTAGE=$(</sys/class/power_supply/${BATTERY_NAME}/capacity)
+if [[ "$(uname)" == "Darwin" ]]; then
+  pmstat=$(pmset -g batt | grep $BATTERY_NAME)
+  BATTERY_STATUS=$(echo $pmstat | awk '{print $4}' | sed 's/[^a-z]*//g')
+  BATTERY_PERCENTAGE=$(echo $pmstat | awk '{print $3}' | sed 's/[^0-9]*//g')
+else
+  BATTERY_STATUS=$(</sys/class/power_supply/${BATTERY_NAME}/status)
+  BATTERY_PERCENTAGE=$(</sys/class/power_supply/${BATTERY_NAME}/capacity)
+fi
 
 # set color and icon based on battery status
 case "${BATTERY_STATUS}" in
-"Charging")
+"Charging" | "charging")
   ICONS="#[fg=green]${CHARGING_ICONS[$((BATTERY_PERCENTAGE / 10 - 1))]}"
   ;;
-"Discharging")
+"Discharging" | "discharging")
   ICONS="${DISCHARGING_ICONS[$((BATTERY_PERCENTAGE / 10 - 1))]}"
   ;;
-"Not charging")
+"Not charging" | "AC")
   ICONS="${NOT_CHARGING_ICON}"
   ;;
-"Full")
+"Full" | "charged")
   ICONS="FULL"
   ;;
 esac
