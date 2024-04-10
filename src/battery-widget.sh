@@ -15,7 +15,7 @@ DISCHARGING_ICONS=("󰁺" "󰁻" "󰁼" "󰁽" "󰁾" "󰁿" "󰂀" "󰂁" "󰂂
 CHARGING_ICONS=("󰢜" "󰂆" "󰂇" "󰂈" "󰢝" "󰂉" "󰢞" "󰂊" "󰂋" "󰂅")
 NOT_CHARGING_ICON="󰚥"
 
-default_show_battery_percentage=1
+#default_show_battery_percentage=1
 default_battery_low="21"
 if [[ "$(uname)" == "Darwin" ]]; then
   default_battery_name="InternalBattery-0"
@@ -28,12 +28,12 @@ BATTERY_LOW="${BATTERY_LOW:-$default_battery_low}"
 
 # get battery stats
 if [[ "$(uname)" == "Darwin" ]]; then
-  pmstat=$(pmset -g batt | grep $BATTERY_NAME)
-  BATTERY_STATUS=$(echo $pmstat | awk '{print $4}' | sed 's/[^a-z]*//g')
-  BATTERY_PERCENTAGE=$(echo $pmstat | awk '{print $3}' | sed 's/[^0-9]*//g')
+  pmstat=$(pmset -g batt | grep "$BATTERY_NAME")
+  BATTERY_STATUS=$(echo "$pmstat" | awk '{print $4}' | sed 's/[^a-z]*//g')
+  BATTERY_PERCENTAGE=$(echo "$pmstat" | awk '{print $3}' | sed 's/[^0-9]*//g')
 else
-  BATTERY_STATUS=$(</sys/class/power_supply/${BATTERY_NAME}/status)
-  BATTERY_PERCENTAGE=$(</sys/class/power_supply/${BATTERY_NAME}/capacity)
+  BATTERY_STATUS=$(</sys/class/power_supply/"${BATTERY_NAME}"/status)
+  BATTERY_PERCENTAGE=$(</sys/class/power_supply/"${BATTERY_NAME}"/capacity)
 fi
 
 # set color and icon based on battery status

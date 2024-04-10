@@ -19,7 +19,7 @@ get_bytes() {
   if [[ "$(uname)" == "Linux" ]]; then
     awk -v interface="$interface" '$1 == interface ":" {print $2, $10}' /proc/net/dev
   elif [[ "$(uname)" == "Darwin" ]]; then
-    netstat -ib | awk -v interface="$interface" '/^'${interface}'/ {print $7, $10}'
+    netstat -ib | awk -v interface="$interface" '/^'"${interface}"'/ {print $7, $10}'
   else
     # Unsupported operating system
     exit 1
@@ -44,9 +44,9 @@ readable_format() {
 }
 
 # Echo network speed
-read RX1 TX1 < <(get_bytes "$INTERFACE")
+read -r RX1 TX1 < <(get_bytes "$INTERFACE")
 sleep 1
-read RX2 TX2 < <(get_bytes "$INTERFACE")
+read -r RX2 TX2 < <(get_bytes "$INTERFACE")
 
 RX_DIFF=$((RX2 - RX1))
 TX_DIFF=$((TX2 - TX1))

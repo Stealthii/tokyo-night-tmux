@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ACCENT_COLOR="#7aa2f7"
-SECONDARY_COLOR="#24283B"
+#SECONDARY_COLOR="#24283B"
 BG_COLOR="#1F2335"
 BG_BAR="#15161e"
 TIME_COLOR="#414868"
@@ -17,7 +17,7 @@ MAX_TITLE_WIDTH=25
 if cmus-remote -Q >/dev/null 2>/dev/null; then
   CMUS_STATUS=$(cmus-remote -Q)
   STATUS=$(echo "$CMUS_STATUS" | grep status | head -n 1 | cut -d' ' -f2-)
-  ARTIST=$(echo "$CMUS_STATUS" | grep 'tag artist' | head -n 1 | cut -d' ' -f3-)
+  #ARTIST=$(echo "$CMUS_STATUS" | grep 'tag artist' | head -n 1 | cut -d' ' -f3-)
   TITLE=$(echo "$CMUS_STATUS" | grep 'tag title' | cut -d' ' -f3-)
   DURATION=$(echo "$CMUS_STATUS" | grep 'duration' | cut -d' ' -f2-)
   POSITION=$(echo "$CMUS_STATUS" | grep 'position' | cut -d' ' -f2-)
@@ -64,7 +64,7 @@ else
   PROGRESS=$((OUTPUT_LENGTH * PERCENT / 100))
   O=" $OUTPUT"
 
-  if [ $PROGRESS -le $TIME_INDEX ]; then
+  if [ $PROGRESS -le "$TIME_INDEX" ]; then
     echo "#[nobold,fg=$BG_COLOR,bg=$ACCENT_COLOR]${O:0:PROGRESS}#[fg=$ACCENT_COLOR,bg=$BG_BAR]${O:PROGRESS:TIME_INDEX} #[fg=$TIME_COLOR,bg=$BG_BAR]$TIME "
   else
     DIFF=$((PROGRESS - TIME_INDEX))

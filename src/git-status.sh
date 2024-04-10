@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 
-cd $1
+cd "$1" || exit 1
 RESET="#[fg=brightwhite,bg=#15161e,nobold,noitalics,nounderscore,nodim]"
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-STATUS=$(git status --porcelain 2>/dev/null | egrep "^(M| M)" | wc -l)
+STATUS=$(git status --porcelain 2>/dev/null | grep -cE "^(M| M)")
 BRANCH_SIZE=${#BRANCH}
 
 SYNC_MODE=0
 NEED_PUSH=0
-NEED_PULL=0
 
 if test "$BRANCH_SIZE" -gt "25"; then
-  BRANCH=$(echo $BRANCH | cut -c1-25)"…"
+  BRANCH="$(echo $BRANCH | cut -c1-25)…"
 fi
 
 STATUS_CHANGED=""

@@ -12,7 +12,7 @@ parse_npcli_value() {
 }
 
 ACCENT_COLOR="#7aa2f7"
-SECONDARY_COLOR="#24283B"
+#SECONDARY_COLOR="#24283B"
 BG_COLOR="#1F2335"
 BG_BAR="#15161e"
 TIME_COLOR="#414868"
@@ -103,7 +103,7 @@ if [ -n "$TITLE" ]; then
   OUTPUT="$PLAY_STATE $TITLE"
 
   # Only show the song title if we are over $MAX_TITLE_WIDTH characters
-  if [ "${#OUTPUT}" -ge $MAX_TITLE_WIDTH ]; then
+  if [ "${#OUTPUT}" -ge "$MAX_TITLE_WIDTH" ]; then
     OUTPUT="$PLAY_STATE ${TITLE:0:$MAX_TITLE_WIDTH-1}…"
   fi
 else
@@ -128,7 +128,7 @@ else
   PROGRESS=$((OUTPUT_LENGTH * PERCENT / 100))
   O=" $OUTPUT"
 
-  if [ $PROGRESS -le $TIME_INDEX ]; then
+  if [ $PROGRESS -le "$TIME_INDEX" ]; then
     echo "#[nobold,fg=$BG_COLOR,bg=$ACCENT_COLOR]${O:0:PROGRESS}#[fg=$ACCENT_COLOR,bg=$BG_BAR]${O:PROGRESS:TIME_INDEX} #[fg=$TIME_COLOR,bg=$BG_BAR]$TIME "
   else
     DIFF=$((PROGRESS - TIME_INDEX))
