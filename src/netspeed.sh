@@ -19,7 +19,7 @@ get_bytes() {
   if [[ "$(uname)" == "Linux" ]]; then
     awk -v interface="$interface" '$1 == interface ":" {print $2, $10}' /proc/net/dev
   elif [[ "$(uname)" == "Darwin" ]]; then
-    netstat -ib | awk -v interface="$interface" '/^'${interface}'/ {print $7, $10}'
+    netstat -ib | awk -v interface="$interface" '/^'"${interface}"'/ {print $7, $10}'
   else
     # Unsupported operating system
     exit 1
@@ -31,12 +31,14 @@ readable_format() {
   local bytes=$1
 
   # Convert bytes to KBps, 'bc' is dependency, 'pacman -S bc'
-  local kbps=$(echo "scale=1; $bytes / 1024" | bc)
+  local kbps
+  kbps=$(echo "scale=1; $bytes / 1024" | bc)
   if (($(echo "$kbps < 1" | bc -l))); then
     echo "0.0B"
   elif (($(echo "$kbps >= 1024" | bc -l))); then
     # Convert KBps to MBps
-    local mbps=$(echo "scale=1; $kbps / 1024" | bc)
+    local mbps
+    mbps=$(echo "scale=1; $kbps / 1024" | bc)
     echo "${mbps}MB/s"
   else
     echo "${kbps}KB/s"
@@ -44,9 +46,9 @@ readable_format() {
 }
 
 # Echo network speed
-read RX1 TX1 < <(get_bytes "$INTERFACE")
+read -r RX1 TX1 < <(get_bytes "$INTERFACE")
 sleep 1
-read RX2 TX2 < <(get_bytes "$INTERFACE")
+read -r RX2 TX2 < <(get_bytes "$INTERFACE")
 
 RX_DIFF=$((RX2 - RX1))
 TX_DIFF=$((TX2 - TX1))

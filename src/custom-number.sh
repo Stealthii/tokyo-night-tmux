@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
-#
 
+# eval is used to expand the format variable
+# shellcheck disable=SC2034
+
+# Explicit characters used for Bash 3.2 compatibility
 format_none="0123456789"
 format_digital="🯰🯱🯲🯳🯴🯵🯶🯷🯸🯹"
 format_fsquare="󰎡󰎤󰎧󰎪󰎭󰎱󰎳󰎶󰎹󰎼"
@@ -14,7 +17,7 @@ ID=$1
 FORMAT=${2:-none}
 
 # Preserve leading whitespace for bash
-format="$(eval echo \"\$format_${FORMAT}\")"
+format="$(eval echo \"\$format_"${FORMAT}"\")"
 if [ -z "$format" ]; then
   echo "Invalid format: $FORMAT"
   exit 1
@@ -22,8 +25,7 @@ fi
 
 # If format is roman numerals (-r), only handle IDs of 1 digit
 if [ "$FORMAT" = "roman" ] && [ ${#ID} -gt 1 ]; then
-  echo -n $ID
-  continue
+  echo -n "$ID"
 else
   for ((i = 0; i < ${#ID}; i++)); do
     DIGIT=${ID:i:1}
