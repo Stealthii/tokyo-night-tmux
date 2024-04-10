@@ -31,12 +31,14 @@ readable_format() {
   local bytes=$1
 
   # Convert bytes to KBps, 'bc' is dependency, 'pacman -S bc'
-  local kbps=$(echo "scale=1; $bytes / 1024" | bc)
+  local kbps
+  kbps=$(echo "scale=1; $bytes / 1024" | bc)
   if (($(echo "$kbps < 1" | bc -l))); then
     echo "0.0B"
   elif (($(echo "$kbps >= 1024" | bc -l))); then
     # Convert KBps to MBps
-    local mbps=$(echo "scale=1; $kbps / 1024" | bc)
+    local mbps
+    mbps=$(echo "scale=1; $kbps / 1024" | bc)
     echo "${mbps}MB/s"
   else
     echo "${kbps}KB/s"
