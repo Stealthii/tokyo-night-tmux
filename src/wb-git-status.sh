@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd "$1"
+cd "$1" || exit 1
 RESET="#[fg=brightwhite,bg=#15161e,nobold,noitalics,nounderscore,nodim,nostrikethrough]"
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 PROVIDER=$(git config remote.origin.url | awk -F '@|:' '{print $2}')
