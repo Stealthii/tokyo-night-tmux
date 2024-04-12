@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd $1
+cd "$1"
 RESET="#[fg=brightwhite,bg=#15161e,nobold,noitalics,nounderscore,nodim]"
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 STATUS=$(git status --porcelain 2>/dev/null | grep -cE "^(M| M)")
@@ -11,7 +11,7 @@ NEED_PUSH=0
 NEED_PULL=0
 
 if test "$BRANCH_SIZE" -gt "25"; then
-  BRANCH=$(echo $BRANCH | cut -c1-25)"…"
+  BRANCH=$(echo "$BRANCH" | cut -c1-25)"…"
 fi
 
 STATUS_CHANGED=""
@@ -62,7 +62,7 @@ if [[ $SYNC_MODE -eq 0 ]]; then
       git fetch --atomic origin --negotiation-tip=HEAD
     fi
 
-    REMOTE_DIFF="$(git diff --shortstat $(git rev-parse --abbrev-ref HEAD) origin/$(git rev-parse --abbrev-ref HEAD) 2>/dev/null | wc -l | bc)"
+    REMOTE_DIFF="$(git diff --shortstat "$(git rev-parse --abbrev-ref HEAD)" "origin/$(git rev-parse --abbrev-ref HEAD)" 2>/dev/null | wc -l | bc)"
     if [[ $REMOTE_DIFF -gt 0 ]]; then
       SYNC_MODE=3
     fi
