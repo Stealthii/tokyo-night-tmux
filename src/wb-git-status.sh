@@ -43,19 +43,19 @@ else
   fi
 fi
 
-if [[ $PR_COUNT > 0 ]]; then
+if [[ $PR_COUNT -gt 0 ]]; then
   PR_STATUS="#[fg=#3fb950,bg=#15161e,bold] ${RESET}${PR_COUNT} "
 fi
 
-if [[ $REVIEW_COUNT > 0 ]]; then
+if [[ $REVIEW_COUNT -gt 0 ]]; then
   REVIEW_STATUS="#[fg=#d29922,bg=#15161e,bold] ${RESET}${REVIEW_COUNT} "
 fi
 
-if [[ $ISSUE_COUNT > 0 ]]; then
+if [[ $ISSUE_COUNT -gt 0 ]]; then
   ISSUE_STATUS="#[fg=#3fb950,bg=#15161e,bold] ${RESET}${ISSUE_COUNT} "
 fi
 
-if [[ $PR_COUNT > 0 || $REVIEW_COUNT > 0 || $ISSUE_COUNT > 0 ]]; then
+if [[ $PR_COUNT -gt 0 || $REVIEW_COUNT -gt 0 || $ISSUE_COUNT -gt 0 ]]; then
   WB_STATUS="#[fg=#464646,bg=#15161e,bold] $RESET$PROVIDER_ICON $RESET$PR_STATUS$REVIEW_STATUS$ISSUE_STATUS"
 fi
 
@@ -64,6 +64,6 @@ echo "$WB_STATUS"
 # Wait extra time if status-interval is less than 30 seconds to
 # avoid to overload GitHub API
 INTERVAL="$(tmux show -g | grep status-interval | cut -d" " -f2 | bc)"
-if [[ $INTERVAL < 20 ]]; then
+if [[ $INTERVAL -lt 20 ]]; then
   sleep 20
 fi
