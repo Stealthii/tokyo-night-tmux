@@ -3,6 +3,7 @@
 . "$(dirname "$0")/../lib/functions.sh"
 
 # check if not enabled
+#
 SHOW_BATTERY_WIDGET=$(tmux show-option -gv @tokyo-night-tmux_show_battery_widget 2>/dev/null)
 if [ "${SHOW_BATTERY_WIDGET}" != "1" ]; then
   exit 0
