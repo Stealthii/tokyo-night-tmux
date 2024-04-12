@@ -3,7 +3,7 @@
 cd $1
 RESET="#[fg=brightwhite,bg=#15161e,nobold,noitalics,nounderscore,nodim]"
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-STATUS=$(git status --porcelain 2>/dev/null | egrep "^(M| M)" | wc -l)
+STATUS=$(git status --porcelain 2>/dev/null | grep -E "^(M| M)" | wc -l)
 BRANCH_SIZE=${#BRANCH}
 
 SYNC_MODE=0
