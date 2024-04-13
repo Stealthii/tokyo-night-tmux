@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Imports
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
+. "${ROOT_DIR}/lib/coreutils-compat.sh"
+
 cd $1
 RESET="#[fg=brightwhite,bg=#15161e,nobold,noitalics,nounderscore,nodim]"
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
