@@ -20,20 +20,23 @@ if [[ -n $BRANCH ]]; then
 fi
 
 if [[ $PROVIDER == "github.com" ]]; then
-
   if ! command -v gh &>/dev/null; then
     exit 1
   fi
-
   PROVIDER_ICON="$RESET#[fg=#fafafa] "
   PR_COUNT=$(gh pr list --json number --jq 'length' | bc)
   REVIEW_COUNT=$(gh pr status --json reviewRequests --jq '.needsReview | length' | bc)
   ISSUE_COUNT=$(gh issue status --json assignees --jq '.assigned | length' | bc)
-else
+elif [[ $PROVIDER == "gitlab.com" ]]; then
+  if ! command -v glab &>/dev/null; then
+    exit 1
+  fi
   PROVIDER_ICON="$RESET#[fg=#fc6d26] "
   PR_COUNT=$(glab mr list | grep -cE "^\!")
   REVIEW_COUNT=$(glab mr list --reviewer=@me | grep -cE "^\!")
   ISSUE_COUNT=$(glab issue list | grep -cE "^\#")
+else
+  exit 0
 fi
 
 if [[ $PR_COUNT -gt 0 ]]; then
