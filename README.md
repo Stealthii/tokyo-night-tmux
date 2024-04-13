@@ -17,7 +17,7 @@ This theme requires the following:
 
 - [Noto Sans] and one of any patched [Nerd Fonts]
 - GNU [coreutils] and [bc]
-- Bash 4.0 or newer
+- Bash 4.2 or newer
 
 ### macOS
 
