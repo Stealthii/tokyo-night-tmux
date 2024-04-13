@@ -31,3 +31,21 @@ jobs:
 
       - name: Run tokyo-night-tmux tests
         run: bats test/
+  bats-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Install Homebrew packages
+        run: |
+          brew install bash bc coreutils curl git
+
+      - name: Setup Bats and bats libs
+        run: |
+          brew install bats-core
+          brew tap bats-core/bats-core
+          brew install bats-support bats-assert bats-file bats-detik
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tokyo-night-tmux tests
+        run: bats test/
