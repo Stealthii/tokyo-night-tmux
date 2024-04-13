@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-. "$(dirname "$0")/../lib/functions.sh"
+# Imports
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
+. "${ROOT_DIR}/lib/coreutils-compat.sh"
 
 cd $1
 RESET="#[fg=brightwhite,bg=#15161e,nobold,noitalics,nounderscore,nodim,nostrikethrough]"
