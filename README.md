@@ -109,6 +109,8 @@ set -g @tokyo-night-tmux_time_format 12H
 
 ```bash
 set -g @tokyo-night-tmux_show_music 1
+set -g @tokyo-night-tmux_music_maxsize "20%" # default% of window width
+set -g @tokyo-night-tmux_music_maxsize 25 # explicit max size
 ```
 
 #### Netspeed widget
