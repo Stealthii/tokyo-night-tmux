@@ -20,3 +20,32 @@ if [[ "$(uname)" == "Darwin" ]]; then
     export PATH="$HOMEBREW_PREFIX/opt/bc/bin:$PATH"
   fi
 fi
+
+# Handle GNU date calls against BSD date
+if ! date --version &>/dev/null; then
+  real_date="$(which date)"
+  echo "date: command not found" >&2
+
+  function date() {
+    local new_args=()
+
+    while [ $# -gt 0 ]; do
+      case "$1" in
+      -d)
+        shift
+        if [[ $1 =~ ^@ ]]; then
+          new_args+=("-r" "${1#@}")
+        else
+          new_args+=("-r" "$1")
+        fi
+        ;;
+      *)
+        new_args+=("$1")
+        ;;
+      esac
+      shift
+    done
+
+    "$real_date" "${new_args[@]}"
+  }
+fi
