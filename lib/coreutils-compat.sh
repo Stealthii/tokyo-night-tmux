@@ -2,7 +2,8 @@
 
 # Compatibility functions for macOS
 if [[ "$(uname)" == "Darwin" ]]; then
-  HOMEBREW_PREFIX="$(brew --prefix)"
+  # Set Homebrew prefix if undefined
+  [[ -z $HOMEBREW_PREFIX ]] && export HOMEBREW_PREFIX="$(brew --prefix)"
   # Use GNU coreutils if available
   if [ -d "$HOMEBREW_PREFIX/opt/coreutils" ]; then
     export PATH="$HOMEBREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"

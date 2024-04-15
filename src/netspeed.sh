@@ -52,7 +52,7 @@ readable_format() {
 
 # Echo network speed
 read RX1 TX1 < <(get_bytes "$INTERFACE")
-sleep 1
+sleep 3
 read RX2 TX2 < <(get_bytes "$INTERFACE")
 
 RX_DIFF=$((RX2 - RX1))
