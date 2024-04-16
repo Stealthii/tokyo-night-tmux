@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
-SHOW_WIDGET=$(tmux show-option -gv @tokyo-night-tmux_show_wbg)
-if [ "$SHOW_WIDGET" == "0" ]; then
-  exit 0
-fi
 
+# Check if enabled
+ENABLED=$(tmux show-option -gv @tokyo-night-tmux_show_wbg 2>/dev/null)
+#[[ ${ENABLED} -ne 1 ]] && exit 0
+
+# Imports
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$CURRENT_DIR../lib/coreutils-compat.sh"
+# shellcheck source=src/themes.sh
 source "$CURRENT_DIR/themes.sh"
+# shellcheck source=lib/git.sh
+source "$CURRENT_DIR/../lib/git.sh"
 
 cd "$1" || exit 1
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-PROVIDER=$(git config remote.origin.url | awk -F '@|:' '{print $2}')
-
-PROVIDER_ICON=""
+[[ -z $BRANCH ]] && exit 0
+PROVIDER=$(get_provider)
+PROVIDER_ICON=$(get_provider_icon "$PROVIDER")
 
 PR_COUNT=0
 REVIEW_COUNT=0
@@ -24,29 +27,24 @@ REVIEW_STATUS=""
 ISSUE_STATUS=""
 BUG_STATUS=""
 
-if [[ -n $BRANCH ]]; then
-  exit 0
-fi
-
-if [[ $PROVIDER == "github.com" ]]; then
+if [[ $PROVIDER == *"github"* ]]; then
   if ! command -v gh &>/dev/null; then
     exit 1
   fi
-  PROVIDER_ICON="$RESET#[fg=${THEME[foreground]}] "
-  PR_COUNT=$(gh pr list --json number --jq 'length' | bc)
-  REVIEW_COUNT=$(gh pr status --json reviewRequests --jq '.needsReview | length' | bc)
+  PR_COUNT=$(gh pr list --json number --jq 'length')
+  REVIEW_COUNT=$(gh pr status --json reviewRequests --jq '.needsReview | length')
   RES=$(gh issue list --json "assignees,labels" --assignee @me)
   ISSUE_COUNT=$(echo "$RES" | jq 'length' | bc)
   BUG_COUNT=$(echo "$RES" | jq 'map(select(.labels[].name == "bug")) | length' | bc)
   ISSUE_COUNT=$((ISSUE_COUNT - BUG_COUNT))
-elif [[ $PROVIDER == "gitlab.com" ]]; then
+elif [[ $PROVIDER == *"gitlab"* ]]; then
   if ! command -v glab &>/dev/null; then
     exit 1
   fi
-  PROVIDER_ICON="$RESET#[fg=#fc6d26] "
   PR_COUNT=$(glab mr list | grep -cE "^\!")
   REVIEW_COUNT=$(glab mr list --reviewer=@me | grep -cE "^\!")
-  ISSUE_COUNT=$(glab issue list | grep -cE "^\#")
+  BUG_COUNT=$(glab issue list -t incident | grep -cE "^\#")
+  ISSUE_COUNT=$(glab issue list -t issue | grep -cE "^\#")
 else
   exit 0
 fi
@@ -68,7 +66,7 @@ if [[ $BUG_COUNT -gt 0 ]]; then
 fi
 
 if [[ $PR_COUNT -gt 0 || $REVIEW_COUNT -gt 0 || $ISSUE_COUNT -gt 0 ]]; then
-  WB_STATUS="#[fg=${THEME[black]},bg=${THEME[background]},bold] $RESET$PROVIDER_ICON $RESET$PR_STATUS$REVIEW_STATUS$ISSUE_STATUS$BUG_STATUS"
+  WB_STATUS="#[fg=${THEME[black]},bg=${THEME[background]},bold] ${RESET}#[fg=${THEME[foreground]}]$PROVIDER_ICON $RESET$PR_STATUS$REVIEW_STATUS$ISSUE_STATUS$BUG_STATUS"
 fi
 
 echo "$WB_STATUS"
