@@ -10,6 +10,8 @@ CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$CURRENT_DIR/themes.sh"
 # shellcheck source=lib/media.sh
 source "$CURRENT_DIR/../lib/media.sh"
+# shellcheck source=lib/custom-number.sh
+source "$CURRENT_DIR/../lib/custom-number.sh"
 
 # Get max length from tmux config
 MAX_LENGTH=$(tmux show -gv @tokyo-night-tmux_music_maxsize 2>/dev/null)
@@ -58,15 +60,38 @@ if [[ ${#OUTPUT} -ge $MAX_LENGTH ]]; then
   OUTPUT="${D_OUTPUT[*]}"
 fi
 
-# Calculate progress index
-PROG_IDX=$((${#OUTPUT} * MEDIA_METADATA[progress] / 100))
-# Calculate timestamp index
-TIME_IDX=$((${#D_OUTPUT[0]} + ${#D_OUTPUT[1]} + ${#D_OUTPUT[2]} + 2))
-# Positive distance between progress and timestamp
-PROG_TIME_LEN=$((TIME_IDX - PROG_IDX))
-[[ $PROG_TIME_LEN -lt 0 ]] && PROG_TIME_LEN=0 && TIME_IDX=$PROG_IDX
-
+# Styling
 ACCENT_COLOR="${THEME[blue]}"
 BG_COLOR="${THEME[background]}"
 TIME_COLOR="${THEME[black]}"
-echo "#[nobold,fg=$BG_COLOR,bg=$ACCENT_COLOR]${OUTPUT:0:PROG_IDX}#[fg=$ACCENT_COLOR,bg=$BG_COLOR]${OUTPUT:PROG_IDX:PROG_TIME_LEN}#[fg=$TIME_COLOR,bg=$BG_COLOR]${OUTPUT:TIME_IDX} "
+[[ ${MEDIA_METADATA[status]} == playing ]] && BAR_COLOR="${THEME[bgreen]}" || BAR_COLOR="${THEME[bwhite]}"
+STYLE=$(tmux show -gv @tokyo-night-tmux_music_style 2>/dev/null)
+
+if [[ $STYLE == "colorscore" ]]; then
+  L_BAR="${D_OUTPUT[0]} ${D_OUTPUT[1]}"
+  R_BAR="${D_OUTPUT[2]} ${D_OUTPUT[3]}"
+  R_LEN=${#R_BAR}
+  PROG_IDX=$((MEDIA_METADATA[progress] * R_LEN / 100))
+  TIME_IDX=$((${#D_OUTPUT[2]} + 1))
+
+  echo -n "#[nobold,fg=$ACCENT_COLOR,bg=$BG_COLOR,us=$BAR_COLOR]${L_BAR} #[double-underscore,underscore]"
+  for ((i = 0; i < R_LEN; i++)); do
+    CHAR="${R_BAR:i:1}"
+    [[ $i -eq $TIME_IDX ]] && echo -n "#[fg=$TIME_COLOR]"
+    [[ $((i - 1)) -eq $PROG_IDX ]] && echo -n "#[nodouble-underscore]"
+    [[ $i -eq $PROG_IDX ]] && echo -n "#[nounderscore]"
+    [[ $i -ge $TIME_IDX ]] && [[ $CHAR =~ ^[0-9]+$ ]] && echo -n "$(custom_number "$CHAR" digital)" || echo -n "${CHAR}"
+  done
+  echo "$RESET#[nounderscore,nodouble-underscore] "
+# Default bar style
+else
+  # Calculate progress index
+  PROG_IDX=$((${#OUTPUT} * MEDIA_METADATA[progress] / 100))
+  # Calculate timestamp index
+  TIME_IDX=$((${#D_OUTPUT[0]} + ${#D_OUTPUT[1]} + ${#D_OUTPUT[2]} + 2))
+  # Positive distance between progress and timestamp
+  PROG_TIME_LEN=$((TIME_IDX - PROG_IDX))
+  [[ $PROG_TIME_LEN -lt 0 ]] && PROG_TIME_LEN=0 && TIME_IDX=$PROG_IDX
+
+  echo "#[nobold,fg=$BG_COLOR,bg=$ACCENT_COLOR]${OUTPUT:0:PROG_IDX}#[fg=$ACCENT_COLOR,bg=$BG_COLOR]${OUTPUT:PROG_IDX:PROG_TIME_LEN}#[fg=$TIME_COLOR,bg=$BG_COLOR]${OUTPUT:TIME_IDX} "
+fi
