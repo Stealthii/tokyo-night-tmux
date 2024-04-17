@@ -14,7 +14,8 @@ jobs:
       - name: Download Test Report
         uses: dawidd6/action-download-artifact@v3
         with:
-          name: report-*
+          name: report-.*
+          name_is_regexp: true
           workflow: ${{ github.event.workflow.id }}
           run_id: ${{ github.event.workflow_run.id }}
 
