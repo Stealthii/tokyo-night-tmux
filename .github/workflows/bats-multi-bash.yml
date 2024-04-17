@@ -44,6 +44,7 @@ jobs:
         with:
           name: report-alpine-${{ matrix.bash }}
           path: report.xml
+          retention-days: 1
   bats-macos:
     runs-on: macos-latest
     strategy:
@@ -77,6 +78,7 @@ jobs:
         with:
           name: report-macOS-${{ matrix.libs }}
           path: report.xml
+          retention-days: 1
   junit-publish:
     needs: [bats-alpine, bats-macos]
     runs-on: ubuntu-latest
