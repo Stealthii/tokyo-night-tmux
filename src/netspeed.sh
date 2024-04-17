@@ -47,6 +47,9 @@ read -r RX2 TX2 < <(get_bytes "$INTERFACE")
 RX_DIFF=$((RX2 - RX1))
 TX_DIFF=$((TX2 - TX1))
 
+RX_DIFF=0
+TX_DIFF=0
+
 RX_SPEED="#[fg=${THEME[foreground]}]$(readable_format "$RX_DIFF" "$TIME_DIFF")"
 TX_SPEED="#[fg=${THEME[foreground]}]$(readable_format "$TX_DIFF" "$TIME_DIFF")"
 
@@ -63,6 +66,9 @@ if IPV4_ADDR=$(interface_ipv4 "$INTERFACE"); then
 else
   IFACE_STATUS="down"
 fi
+
+IPV4_ADDR=""
+IFACE_STATUS="down"
 
 NETWORK_ICON=${NET_ICONS[${IFACE_TYPE}_${IFACE_STATUS}]}
 
