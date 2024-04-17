@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-SELECTED_THEME="$(tmux show-option -gv @tokyo-night-tmux_theme)"
+SELECTED_THEME="$(tmux show-option -gv @tokyo-night-tmux_theme 2>/dev/null)"
+
+declare -A THEME
 
 case $SELECTED_THEME in
 "storm")
-  declare -A THEME=(
+  THEME=(
     ["background"]="#24283b"
     ["foreground"]="#a9b1d6"
     ["black"]="#414868"
@@ -28,7 +30,7 @@ case $SELECTED_THEME in
   ;;
 
 "day")
-  declare -A THEME=(
+  THEME=(
     ["background"]="#d5d6db"
     ["foreground"]="#343b58"
     ["black"]="#0f0f14"
@@ -53,7 +55,7 @@ case $SELECTED_THEME in
 
 *)
   # Default to night theme
-  declare -A THEME=(
+  THEME=(
     ["background"]="#1A1B26"
     ["foreground"]="#a9b1d6"
     ["black"]="#414868"
@@ -83,3 +85,6 @@ THEME['ghred']="#d73a4a"
 THEME['ghyellow']="#d29922"
 
 RESET="#[fg=${THEME[foreground]},bg=${THEME[background]},nobold,noitalics,nounderscore,nodim]"
+
+export THEME
+export RESET

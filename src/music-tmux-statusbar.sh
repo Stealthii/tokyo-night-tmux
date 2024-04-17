@@ -1,124 +1,97 @@
 #!/usr/bin/env bash
 
+# Check if enabled
+ENABLED=$(tmux show-option -gv @tokyo-night-tmux_show_music 2>/dev/null)
+[[ ${ENABLED} -ne 1 ]] && exit 0
+
 # Imports
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
-. "${ROOT_DIR}/lib/coreutils-compat.sh"
-
-# Check the global value
-SHOW_MUSIC=$(tmux show-option -gv @tokyo-night-tmux_show_music)
-
-if [ "$SHOW_MUSIC" != "1" ]; then
-  exit 0
-fi
-
 CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source $CURRENT_DIR/themes.sh
+# shellcheck source=src/themes.sh
+source "$CURRENT_DIR/themes.sh"
+# shellcheck source=lib/media.sh
+source "$CURRENT_DIR/../lib/media.sh"
+# shellcheck source=lib/custom-number.sh
+source "$CURRENT_DIR/../lib/custom-number.sh"
 
+# Get max length from tmux config
+MAX_LENGTH=$(tmux show -gv @tokyo-night-tmux_music_maxsize 2>/dev/null)
+# Default to 20% of the window width
+[[ -z $MAX_LENGTH ]] && MAX_LENGTH="20%"
+# If MAX_LENGTH ends in %, calculate the percentage of the window width
+[[ $MAX_LENGTH == *% ]] && MAX_LENGTH=$(($(tmux display -p '#{window_width}' 2>/dev/null || echo 120) * ${MAX_LENGTH%\%} / 100))
+
+# Fetch metadata
+media_metadata update
+
+# Exit if no metadata is available
+[[ -z ${MEDIA_METADATA[*]} ]] && exit 0
+
+# Generate output
+declare -a D_OUTPUT=("░")
+
+# Playstate
+D_OUTPUT[1]=$([[ ${MEDIA_METADATA[status]} == playing ]] && echo "" || echo "󰏤")
+
+# Artist & Title
+ARTIST="${MEDIA_METADATA[artist]}"
+TITLE="${MEDIA_METADATA[title]}"
+D_OUTPUT[2]="${ARTIST:+$ARTIST - }${TITLE}"
+
+# Time
+D_OUTPUT[3]="$(media_metadata timestamp full)"
+
+# Initial output
+OUTPUT="${D_OUTPUT[*]}"
+
+# Adjust output based on max length
+if [[ ${#OUTPUT} -ge $MAX_LENGTH ]]; then
+  # Drop to remaining time
+  D_OUTPUT[3]=$(media_metadata timestamp remaining)
+  OUTPUT="${D_OUTPUT[*]}"
+fi
+if [[ ${#OUTPUT} -ge $MAX_LENGTH ]]; then
+  # Drop artist
+  D_OUTPUT[2]="$TITLE"
+  OUTPUT="${D_OUTPUT[*]}"
+fi
+if [[ ${#OUTPUT} -ge $MAX_LENGTH ]]; then
+  # Trim title to fit total max length
+  D_OUTPUT[2]="${TITLE:0:$MAX_LENGTH-${#OUTPUT}+${#TITLE}}…"
+  OUTPUT="${D_OUTPUT[*]}"
+fi
+
+# Styling
 ACCENT_COLOR="${THEME[blue]}"
-SECONDARY_COLOR="${THEME[background]}"
 BG_COLOR="${THEME[background]}"
-BG_BAR="${THEME[background]}"
 TIME_COLOR="${THEME[black]}"
+[[ ${MEDIA_METADATA[status]} == playing ]] && BAR_COLOR="${THEME[bgreen]}" || BAR_COLOR="${THEME[bwhite]}"
+STYLE=$(tmux show -gv @tokyo-night-tmux_music_style 2>/dev/null)
 
-if [[ $1 =~ ^[[:digit:]]+$ ]]; then
-  MAX_TITLE_WIDTH=$1
-else
-  MAX_TITLE_WIDTH=$(($(tmux display -p '#{window_width}' 2>/dev/null || echo 120) - 90))
-fi
+if [[ $STYLE == "colorscore" ]]; then
+  L_BAR="${D_OUTPUT[0]} ${D_OUTPUT[1]}"
+  R_BAR="${D_OUTPUT[2]} ${D_OUTPUT[3]}"
+  R_LEN=${#R_BAR}
+  PROG_IDX=$((MEDIA_METADATA[progress] * R_LEN / 100))
+  TIME_IDX=$((${#D_OUTPUT[2]} + 1))
 
-# playerctl
-if command -v playerctl >/dev/null; then
-  PLAYER_STATUS=$(playerctl -a metadata --format "{{status}};{{mpris:length}};{{position}};{{title}}" | grep -m1 "Playing")
-  STATUS="playing"
-
-  # There is no playing media, check for paused media
-  if [ -z "$PLAYER_STATUS" ]; then
-    PLAYER_STATUS=$(playerctl -a metadata --format "{{status}};{{mpris:length}};{{position}};{{title}}" | grep -m1 "Paused")
-    STATUS="paused"
-  fi
-
-  TITLE=$(echo "$PLAYER_STATUS" | cut -d';' --fields=4)
-  DURATION=$(echo "$PLAYER_STATUS" | cut -d';' --fields=2)
-  POSITION=$(echo "$PLAYER_STATUS" | cut -d';' --fields=3)
-
-  # Convert position and duration to seconds from microseconds
-  DURATION=$((DURATION / 1000000))
-  POSITION=$((POSITION / 1000000))
-
-  if [ "$DURATION" -eq 0 ]; then
-    DURATION=-1
-    POSITION=0
-  fi
-
-# nowplaying-cli
-elif command -v nowplaying-cli >/dev/null; then
-  NPCLI_PROPERTIES=(title duration elapsedTime playbackRate isAlwaysLive)
-  mapfile -t NPCLI_OUTPUT < <(nowplaying-cli get "${NPCLI_PROPERTIES[@]}")
-  declare -A NPCLI_VALUES
-  for ((i = 0; i < ${#NPCLI_PROPERTIES[@]}; i++)); do
-    # Handle null values
-    [ "${NPCLI_OUTPUT[$i]}" = "null" ] && NPCLI_OUTPUT[$i]=""
-    NPCLI_VALUES[${NPCLI_PROPERTIES[$i]}]="${NPCLI_OUTPUT[$i]}"
+  echo -n "#[nobold,fg=$ACCENT_COLOR,bg=$BG_COLOR,us=$BAR_COLOR]${L_BAR} #[double-underscore,underscore]"
+  for ((i = 0; i < R_LEN; i++)); do
+    CHAR="${R_BAR:i:1}"
+    [[ $i -eq $TIME_IDX ]] && echo -n "#[fg=$TIME_COLOR]"
+    [[ $((i - 1)) -eq $PROG_IDX ]] && echo -n "#[nodouble-underscore]"
+    [[ $i -eq $PROG_IDX ]] && echo -n "#[nounderscore]"
+    [[ $i -ge $TIME_IDX ]] && [[ $CHAR =~ ^[0-9]+$ ]] && echo -n "$(custom_number "$CHAR" digital)" || echo -n "${CHAR}"
   done
-  if [ -n "${NPCLI_VALUES[playbackRate]}" ] && [ "${NPCLI_VALUES[playbackRate]}" -gt 0 ]; then
-    STATUS="playing"
-  else
-    STATUS="paused"
-  fi
-  TITLE="${NPCLI_VALUES[title]}"
-  if [ "${NPCLI_VALUES[isAlwaysLive]}" = "1" ]; then
-    DURATION=-1
-    POSITION=0
-  else
-    DURATION=$(printf "%.0f" "${NPCLI_VALUES[duration]}")
-    POSITION=$(printf "%.0f" "${NPCLI_VALUES[elapsedTime]}")
-  fi
-fi
-
-# Calculate the progress bar for sane durations
-if [ -n "$DURATION" ] && [ -n "$POSITION" ] && [ "$DURATION" -gt 0 ] && [ "$DURATION" -lt 3600 ]; then
-  TIME="[$(date -d@$POSITION -u +%M:%S) / $(date -d@$DURATION -u +%M:%S)]"
+  echo "$RESET#[nounderscore,nodouble-underscore] "
+# Default bar style
 else
-  TIME="[--:--]"
-fi
-if [ -n "$TITLE" ]; then
-  if [ "$STATUS" = "playing" ]; then
-    PLAY_STATE="░ $OUTPUT"
-  else
-    PLAY_STATE="░ 󰏤$OUTPUT"
-  fi
-  OUTPUT="$PLAY_STATE $TITLE"
+  # Calculate progress index
+  PROG_IDX=$((${#OUTPUT} * MEDIA_METADATA[progress] / 100))
+  # Calculate timestamp index
+  TIME_IDX=$((${#D_OUTPUT[0]} + ${#D_OUTPUT[1]} + ${#D_OUTPUT[2]} + 2))
+  # Positive distance between progress and timestamp
+  PROG_TIME_LEN=$((TIME_IDX - PROG_IDX))
+  [[ $PROG_TIME_LEN -lt 0 ]] && PROG_TIME_LEN=0 && TIME_IDX=$PROG_IDX
 
-  # Only show the song title if we are over $MAX_TITLE_WIDTH characters
-  if [ "${#OUTPUT}" -ge $MAX_TITLE_WIDTH ]; then
-    OUTPUT="$PLAY_STATE ${TITLE:0:$MAX_TITLE_WIDTH-1}…"
-  fi
-else
-  OUTPUT=''
-fi
-
-MAX_TITLE_WIDTH=25
-if [ "${#OUTPUT}" -ge $MAX_TITLE_WIDTH ]; then
-  OUTPUT="$PLAY_STATE ${TITLE:0:$MAX_TITLE_WIDTH-1}"
-  # Remove trailing spaces
-  OUTPUT="${OUTPUT%"${OUTPUT##*[![:space:]]}"}…"
-fi
-
-if [ -z "$OUTPUT" ]; then
-  echo "$OUTPUT #[fg=green,bg=default]"
-else
-  OUT="$OUTPUT $TIME "
-  ONLY_OUT="$OUTPUT "
-  TIME_INDEX=${#ONLY_OUT}
-  OUTPUT_LENGTH=${#OUT}
-  PERCENT=$((POSITION * 100 / DURATION))
-  PROGRESS=$((OUTPUT_LENGTH * PERCENT / 100))
-  O="$OUTPUT"
-
-  if [ $PROGRESS -le $TIME_INDEX ]; then
-    echo "#[nobold,fg=$BG_COLOR,bg=$ACCENT_COLOR]${O:0:PROGRESS}#[fg=$ACCENT_COLOR,bg=$BG_BAR]${O:PROGRESS:TIME_INDEX} #[fg=$TIME_COLOR,bg=$BG_BAR]$TIME "
-  else
-    DIFF=$((PROGRESS - TIME_INDEX))
-    echo "#[nobold,fg=$BG_COLOR,bg=$ACCENT_COLOR]${O:0:TIME_INDEX} #[fg=$BG_BAR,bg=$ACCENT_COLOR]${OUT:TIME_INDEX:DIFF}#[fg=$TIME_COLOR,bg=$BG_BAR]${OUT:PROGRESS}"
-  fi
+  echo "#[nobold,fg=$BG_COLOR,bg=$ACCENT_COLOR]${OUTPUT:0:PROG_IDX}#[fg=$ACCENT_COLOR,bg=$BG_COLOR]${OUTPUT:PROG_IDX:PROG_TIME_LEN}#[fg=$TIME_COLOR,bg=$BG_COLOR]${OUTPUT:TIME_IDX} "
 fi
