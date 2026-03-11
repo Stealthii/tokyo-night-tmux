@@ -34,43 +34,43 @@ function media_metadata_playerctl() {
 }
 
 function media_metadata_nowplaying() {
-  NPCLI_PROPERTIES=(artist title duration elapsedTime playbackRate isAlwaysLive)
-  mapfile -t NPCLI_OUTPUT < <(nowplaying-cli get "${NPCLI_PROPERTIES[@]}")
-  declare -A NPCLI_VALUES
-  for ((i = 0; i < ${#NPCLI_PROPERTIES[@]}; i++)); do
-    # Handle null values
-    [[ ${NPCLI_OUTPUT[i]} == null ]] && NPCLI_OUTPUT[i]=''
-    NPCLI_VALUES[${NPCLI_PROPERTIES[i]}]=${NPCLI_OUTPUT[i]}
-  done
+  local mc_json
+  mc_json=$(media-control get --now 2>/dev/null) || return
+
+  # Parse JSON with jq
+  local mc_artist mc_title mc_duration mc_elapsed mc_playback_rate mc_playing
+  mc_artist=$(jq -r '.artist // empty' <<<"$mc_json")
+  mc_title=$(jq -r '.title // empty' <<<"$mc_json")
+  mc_duration=$(jq -r '.duration // 0' <<<"$mc_json")
+  mc_elapsed=$(jq -r '.elapsedTimeNow // .elapsedTime // 0' <<<"$mc_json")
+  mc_playback_rate=$(jq -r '.playbackRate // 0' <<<"$mc_json")
+  mc_playing=$(jq -r '.playing // false' <<<"$mc_json")
 
   # Artist and title
-  MEDIA_METADATA[artist]="${NPCLI_VALUES[artist]}"
-  MEDIA_METADATA[title]="${NPCLI_VALUES[title]}"
+  MEDIA_METADATA[artist]="$mc_artist"
+  MEDIA_METADATA[title]="$mc_title"
 
   # Calculate playback status
-  if [[ -n ${NPCLI_VALUES[playbackRate]} ]] && [[ ${NPCLI_VALUES[playbackRate]} -gt 0 ]]; then
+  if [[ $mc_playing == "true" ]] || { [[ -n $mc_playback_rate ]] && [[ $mc_playback_rate -gt 0 ]]; }; then
     MEDIA_METADATA[status]="playing"
   else
     MEDIA_METADATA[status]="paused"
   fi
 
   # Calculate elapsed time, duration, and progress
-  MEDIA_METADATA[elapsed]=$(printf "%.0f" "${NPCLI_VALUES[elapsedTime]}")
-  MEDIA_METADATA[duration]=$(printf "%.0f" "${NPCLI_VALUES[duration]}")
-  if [[ ${NPCLI_VALUES[isAlwaysLive]} -ne 0 ]]; then
-    MEDIA_METADATA[duration]="${MEDIA_METADATA[elapsed]}"
-  fi
+  MEDIA_METADATA[elapsed]=$(printf "%.0f" "$mc_elapsed")
+  MEDIA_METADATA[duration]=$(printf "%.0f" "$mc_duration")
   if [[ ${MEDIA_METADATA[duration]} -eq 0 ]]; then
     MEDIA_METADATA[progress]=100
   else
     # Use bc to calculate progress percentage
-    MEDIA_METADATA[progress]=$(printf "%.0f" "$(bc -l <<<"(${NPCLI_VALUES[elapsedTime]} / ${NPCLI_VALUES[duration]}) * 100")")
+    MEDIA_METADATA[progress]=$(printf "%.0f" "$(bc -l <<<"($mc_elapsed / $mc_duration) * 100")")
   fi
 }
 
 function media_metadata_update() {
   # macOS metadata
-  if command -v nowplaying-cli >/dev/null; then
+  if command -v media-control >/dev/null; then
     media_metadata_nowplaying
   # playerctl metadata
   elif command -v playerctl >/dev/null; then

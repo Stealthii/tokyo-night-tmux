@@ -25,7 +25,7 @@ The following are recommended for full support of all widgets and features:
 - [Noto Sans] Symbols 2 (for segmented digit numbers)
 - [bc] (for netspeed and git widgets)
 - [jq], [gh], [glab] (for git widgets)
-- [playerctl] (Linux) or [nowplaying-cli] (macOS) for music statusbar
+- [playerctl] (Linux) or [media-control] (macOS) for music statusbar
 
 ### macOS
 
@@ -35,7 +35,7 @@ You can easily install all dependencies via [Homebrew]:
 ```bash
 brew tap homebrew/cask-fonts
 brew install --cask font-monaspace-nerd-font font-noto-sans-symbols-2
-brew install bash bc coreutils gawk gh glab gsed jq nowplaying-cli
+brew install bash bc coreutils gawk gh glab gsed jq media-control
 ```
 
 ### Linux
@@ -171,7 +171,7 @@ so it's independent of terminal theme.
 - Remote branch sync indicator (you will never forget to push or pull again 🤪).
 - Great terminal icons.
 - Prefix highlight incorporated.
-- Now Playing status bar, supporting [playerctl]/[nowplaying-cli]
+- Now Playing status bar, supporting [playerctl]/[media-control]
 - Windows has custom pane number indicator.
 - Pane zoom mode indicator.
 - Date and time.
@@ -217,5 +217,5 @@ run against any raised PRs.
 [bc]: https://www.gnu.org/software/bc/
 [jq]: https://jqlang.github.io/jq/
 [playerctl]: https://github.com/altdesktop/playerctl
-[nowplaying-cli]: https://github.com/kirtan-shah/nowplaying-cli
+[media-control]: https://github.com/ungive/media-control
 [Homebrew]: https://brew.sh/

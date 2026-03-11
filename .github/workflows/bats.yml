@@ -53,7 +53,7 @@ jobs:
       - name: Install Homebrew packages
         run: |
           # Theme dependencies
-          brew install bash jq nowplaying-cli
+          brew install bash jq media-control
           if [[ "${{ matrix.libs }}" == "gnu" ]]; then
             brew install bc coreutils gawk gsed
           fi
